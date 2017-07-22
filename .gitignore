@@ -1,0 +1,15 @@
+.idea/*
+*.[Pp]yc
+*.[Pp]yo
+migrations/*
+settings.py
+.installed.cfg
+bin
+develop-eggs
+dist
+downloads
+eggs
+parts
+src/*.egg-info
+lib
+lib64
