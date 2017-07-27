@@ -1,11 +1,21 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.shortcuts import render
+from django.shortcuts import render,redirect
 from datetime import datetime
-from  myapp.forms import SignUpForm,LoginForm
-from myapp.models import UserModel
+from  myapp.forms import SignUpForm,LoginForm,PostForm
+from myapp.models import UserModel,SessionToken,PostModel
+from datetime import timedelta
+from django.utils import timezone
+from myproject.settings import BASE_DIR
 from django.contrib.auth.hashers import make_password,check_password
+
+
+from imgurpython import ImgurClient
+client_id = "23d291dfe81302c"
+client_sec = "ffe60658423553b9735538521613638981b0e69c"
+
+
 # Create your views here.
 def signup_view(request) :
     #Business Logic starts here
@@ -32,10 +42,15 @@ def signup_view(request) :
 
         return render(request,'success.html',{'form': form})
 
+
+
+
 def login_view(request) :
+    response_data = {}
     if request.method == 'GET' :#display form
         template='login.html'    #it will redirect to login page
         form = LoginForm()       #object
+
 
     elif request.method =='POST' :
         form = LoginForm(request.POST)
@@ -52,10 +67,63 @@ def login_view(request) :
                 #comparison sof password here
                 if check_password(password,user.password) :
                     #login successful here
-                    template = 'login_success.html'
+
+                    new_token = SessionToken(user=user)
+                    new_token.create_token()
+                    new_token.save()
+                    #response = redirect('feed/')
+                    response=feed_view(request)
+                    response.set_cookie(key='session_token', value = new_token.session_token)
+                    #template = 'login_success.html'
+                    return response
+                    #return render(request,template,{'form':form},response)
                 else:
                     #password is incorrect
                     template = 'login_fail.html'
+                    response_data['message'] = "Incorrect Password!!!Try Again"
             else :
                 template ='login_fail.html'
+    response_data['form'] = form
     return render(request,template,{'form':form})
+
+
+def feed_view(request) :
+    return render(request,'feed.html')
+
+#For Validation Of the Session In THe SErver
+
+def check_validation(request) :
+    if request.COOKIES.get('session_token') :
+        session = SessionToken.objects.filter(session_token=request.COOKIES.get('session_token')).first()
+        if session :
+            return session.user
+        else :
+            return None
+
+def post_view(request) :
+    user = check_validation(request)
+
+    if user :
+        if request.method == 'POST' :
+            form = PostForm(request.POST,request.FILES)
+            if form.is_valid() :
+                image = form.cleaned_data.get('image')
+                caption = form.cleaned_data.get('caption')
+                post = PostModel(user=user, image=image, caption=caption)
+                post.save()
+
+                path = str(BASE_DIR +"//"+ post.image.url)
+
+                client = ImgurClient(client_id,client_sec)
+                post.image_url = client.upload_from_path(path, anon=True)['link']
+                post.save()
+
+
+                return redirect('/feed/')
+
+        else :
+            form = PostForm()
+        return render(request, 'post.html', {'form' : form})
+
+    else :
+        return redirect('/login/')
