@@ -25,7 +25,7 @@ def signup_view(request) :
         #today=datetime.now()
         form = SignUpForm()
         #template_name='signup.html'
-        return render(request,'signup.html',{'form':form})
+        return render(request,'signupp.html',{'form':form})
 
     elif request.method=='POST' :
         form = SignUpForm(request.POST)
@@ -49,7 +49,7 @@ def signup_view(request) :
 def login_view(request) :
     response_data = {}
     if request.method == 'GET' :#display form
-        template='login.html'    #it will redirect to login page
+        template='loginn.html'    #it will redirect to login page
         form = LoginForm()       #object
 
 
@@ -143,7 +143,7 @@ def post_view(request) :
 
         else :
             form = PostForm()
-        return render(request, 'post.html', {'form' : form})
+        return render(request, 'posts.html', {'form' : form})
 
     else :
         return redirect('/login/')
