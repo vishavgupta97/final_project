@@ -99,7 +99,7 @@ def feed_view(request) :
             if existing_like:
                 post.has_liked = True
 
-        return render(request, 'feed.html', {'posts': posts})
+        return render(request, 'feeds.html', {'posts': posts})
     else:
 
         return redirect('/login/')
